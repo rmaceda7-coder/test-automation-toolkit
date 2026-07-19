@@ -1,16 +1,17 @@
 ﻿# Test Automation Toolkit
 
-MCP-driven test automation stack integrating **Playwright**, **Filesystem**, and **GitHub** servers for end-to-end browser QA orchestration via opencode CLI.
+MCP-driven test automation stack integrating **Playwright**, **Filesystem**, **GitHub**, and **Serena** servers for end-to-end browser QA orchestration via opencode CLI.
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────┐
-│                  opencode CLI                     │
-├─────────────────────────────────────────────────┤
-│  Playwright MCP    Filesystem MCP   GitHub MCP   │
-│  (browser UI)      (artifacts)      (issues/PR)  │
-└─────────────────────────────────────────────────┘
++--------------------------------------------------+
+|                  opencode CLI                     |
++--------------------------------------------------+
+|  Playwright MCP  | Filesystem MCP | GitHub MCP   |
+|  (browser UI)    | (artifacts)    | (issues/PR)  |
+|  Serena MCP      | (code analysis)|              |
++--------------------------------------------------+
 ```
 
 ## MCP Servers
@@ -20,6 +21,7 @@ MCP-driven test automation stack integrating **Playwright**, **Filesystem**, and
 | **Playwright** | `@playwright/mcp` | Browser navigation, clicks, assertions, screenshots |
 | **Filesystem** | `@modelcontextprotocol/server-filesystem` | Save test reports, logs, screenshots locally |
 | **GitHub** | `@modelcontextprotocol/server-github` | Create issues, PRs from test results |
+| **Serena** | `serena` | Code analysis, symbol lookup, refactoring |
 
 ## Configuration
 
@@ -31,13 +33,14 @@ The MCPs are registered in `~/.config/opencode/opencode.json`:
   "mcp": {
     "playwright": {
       "type": "local",
-      "command": ["npx", "@playwright/mcp"],
+      "command": ["npx", "-y", "@playwright/mcp"],
       "enabled": true
     },
     "filesystem": {
       "type": "local",
-      "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "~/test-automation"],
-      "enabled": true
+      "command": ["mcp-server-filesystem", "~/test-automation"],
+      "enabled": true,
+      "timeout": 60000
     },
     "github": {
       "type": "local",
@@ -46,6 +49,12 @@ The MCPs are registered in `~/.config/opencode/opencode.json`:
       "env": {
         "GITHUB_TOKEN": "${GITHUB_TOKEN}"
       }
+    },
+    "serena": {
+      "type": "local",
+      "command": ["serena", "start-mcp-server", "--context=codex", "--project-from-cwd"],
+      "enabled": true,
+      "timeout": 60000
     }
   }
 }
@@ -56,6 +65,7 @@ The MCPs are registered in `~/.config/opencode/opencode.json`:
 - **Node.js** >= 18
 - **GitHub Token** set as a user environment variable `GITHUB_TOKEN` with `repo` scope
 - **opencode** CLI or VS Code extension
+- **Serena** CLI (for code analysis features)
 
 ## Usage
 
@@ -87,6 +97,6 @@ Restart your terminal for the change to take effect.
 
 ```
 ~/test-automation/
-├── README.md           ← this file
-└── reports/            ← test results & screenshots (generated)
+  README.md           <- this file
+  reports/            <- test results & screenshots (generated)
 ```
